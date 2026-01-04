@@ -6,16 +6,16 @@ import joblib
 import os
 
 # ------------------------
-# Page config
+# Streamlit page config
 # ------------------------
 st.set_page_config(
-    page_title="🏎️ Ultimate Sports Car Price Predictor",
+    page_title="🏎️ Sports Car Price Predictor",
     page_icon="🚗",
     layout="wide"
 )
 
 # ------------------------
-# Custom CSS for visuals
+# Custom CSS
 # ------------------------
 st.markdown("""
 <style>
@@ -41,12 +41,21 @@ img {
 }
 
 /* Input boxes */
-.stTextInput>div>input, .stNumberInput>div>input, .stSelectbox>div>div {
+.stTextInput>div>input, .stNumberInput>div>input {
     border-radius: 12px;
     padding: 10px;
     background-color: #1e1e1e;
-    color: white;
+    color: #00ffcc;   /* changed text color */
     border: 2px solid #ff0000;
+}
+
+/* Card style select boxes */
+.selectbox-container {
+    background-color: #1e1e1e;
+    border: 2px solid #ff0000;
+    border-radius: 15px;
+    padding: 10px;
+    color: #00ffcc;
 }
 
 /* Buttons */
@@ -88,7 +97,7 @@ img {
 # ------------------------
 # Title and hero image
 # ------------------------
-st.markdown("<h1>🏎️ Ultimate Sports Car Price Predictor</h1>", unsafe_allow_html=True)
+st.markdown("<h1>🏎️ Sports Car Price Predictor</h1>", unsafe_allow_html=True)
 st.image("https://cdn.pixabay.com/photo/2017/09/14/10/43/ferrari-2748582_1280.jpg", use_column_width=True)
 
 # ------------------------
@@ -118,8 +127,14 @@ with col1:
     engine_size = st.number_input("Engine Size (L)", min_value=0.5, max_value=8.0, value=3.0, step=0.1)
 
 with col2:
-    fuel_type = st.selectbox("Fuel Type", ["Petrol", "Diesel", "Electric", "Hybrid"])
-    transmission = st.selectbox("Transmission", ["Manual", "Automatic"])
+    # Fuel Type as card-style selectbox
+    st.markdown('<div class="selectbox-container">Fuel Type</div>', unsafe_allow_html=True)
+    fuel_type = st.selectbox("", ["Petrol", "Diesel", "Electric", "Hybrid"], key="fuel_type")
+
+    # Transmission as card-style selectbox
+    st.markdown('<div class="selectbox-container">Transmission</div>', unsafe_allow_html=True)
+    transmission = st.selectbox("", ["Manual", "Automatic"], key="transmission")
+
     brand = st.text_input("Brand", value="Ferrari")
 
 with col3:
@@ -142,15 +157,13 @@ if st.button("Predict Price"):
     }
 
     input_df = pd.DataFrame(input_dict)
-
-    # One-hot encode categorical features
     input_encoded = pd.get_dummies(input_df, drop_first=True)
 
-    # Align columns with model
+    # Align input with model features
     model_features = model.feature_names_in_ if hasattr(model, 'feature_names_in_') else input_encoded.columns
     input_encoded = input_encoded.reindex(columns=model_features, fill_value=0)
 
-    # Predict
+    # Prediction
     try:
         price = model.predict(input_encoded)[0]
         st.success(f"💰 Estimated Price: ${price:,.2f}")
