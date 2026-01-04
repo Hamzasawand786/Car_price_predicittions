@@ -1,113 +1,199 @@
 # app.py
+
 import streamlit as st
 import pandas as pd
-import numpy as np
 import joblib
-from PIL import Image
-from sklearn.preprocessing import StandardScaler
+import os
 
-# Load your trained model
-model = joblib.load("car_price_model.pkl")
-
+# ------------------------
 # Page config
+# ------------------------
 st.set_page_config(
-    page_title="🔥 Sports Car Predictor 🔥",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    page_title="🏎️ Supercar Price Dashboard",
+    page_icon="🚀",
+    layout="wide"
 )
 
-# --- Custom CSS for sporty UI ---
+# ------------------------
+# Custom CSS for sporty interface
+# ------------------------
 st.markdown("""
 <style>
-/* Background gradient */
-body {
-    background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
-    color: white;
+/* Body and background */
+body, .main {
+    background: linear-gradient(to bottom right, #0a0a0a, #1a1a1a);
+    color: #f0f0f0;
+    font-family: 'Orbitron', sans-serif;
 }
 
-/* Card style */
-.card {
-    background-color: rgba(255, 255, 255, 0.05);
-    padding: 20px;
-    border-radius: 20px;
-    box-shadow: 0 8px 32px 0 rgba(0,0,0,0.37);
-    margin-bottom: 20px;
-}
-
-/* Big buttons */
-.stButton>button {
-    background: linear-gradient(45deg, #ff416c, #ff4b2b);
-    color: white;
-    font-size: 18px;
+/* Title */
+h1 {
+    color: #ff0000;
+    text-align: center;
+    font-size: 3.5rem;
     font-weight: bold;
-    border-radius: 12px;
-    padding: 10px 20px;
-    transition: 0.3s;
+    text-shadow: 0 0 15px #ff0000;
+    margin-bottom: 10px;
 }
 
-.stButton>button:hover {
-    background: linear-gradient(45deg, #ff4b2b, #ff416c);
+/* Hero image */
+.hero-img {
+    border-radius: 20px;
+    box-shadow: 0 0 30px #ff0000;
+    margin-bottom: 30px;
+}
+
+/* Input cards */
+.input-card {
+    background-color: #1e1e1e;
+    border: 2px solid #ff0000;
+    border-radius: 20px;
+    padding: 15px;
+    margin-bottom: 15px;
+    transition: transform 0.2s;
+}
+.input-card:hover {
     transform: scale(1.05);
+    border-color: #ff7f00;
 }
 
-/* Headers */
-h1, h2, h3 {
-    color: #ffcc00;
-    text-shadow: 2px 2px 5px #000;
+/* Input text */
+input, .stNumberInput>div>input {
+    background-color: #2a2a2a;
+    color: #00ffff;
+    border-radius: 10px;
+    padding: 8px;
+    border: 1px solid #ff0000;
+}
+
+/* Selectbox container */
+.selectbox-card {
+    background-color: #1e1e1e;
+    border-radius: 15px;
+    border: 2px solid #ff0000;
+    padding: 10px;
+    color: #00ffff;
+    margin-bottom: 10px;
+}
+
+/* Predict button */
+.stButton>button {
+    background: linear-gradient(90deg, #ff0000, #ff7f00);
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+    border-radius: 20px;
+    padding: 15px 30px;
+    transition: transform 0.2s ease;
+    box-shadow: 0 0 20px #ff7f00;
+}
+.stButton>button:hover {
+    transform: scale(1.08);
+    box-shadow: 0 0 30px #ff0000;
+}
+
+/* Price card */
+.price-card {
+    background: radial-gradient(circle, #ff0000 0%, #ffcc00 70%);
+    color: black;
+    font-size: 2.5rem;
+    font-weight: bold;
+    text-align: center;
+    padding: 20px;
+    border-radius: 25px;
+    box-shadow: 0 0 30px #ffcc00;
+    margin-top: 20px;
+}
+
+/* Error */
+.stError {
+    background-color: #ff4b4b;
+    color: white;
+    font-size: 1.3rem;
+    border-radius: 12px;
+    padding: 12px;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# --- Header ---
-st.markdown("<h1>🏎️ Sports Car Price Predictor</h1>", unsafe_allow_html=True)
-st.markdown("<h3>Enter your car details to get a turbo-charged prediction!</h3>", unsafe_allow_html=True)
+# ------------------------
+# Title and hero image
+# ------------------------
+st.markdown("<h1>🏎️ Supercar Price Dashboard</h1>", unsafe_allow_html=True)
+st.image("https://cdn.pixabay.com/photo/2018/03/01/10/05/car-3190192_1280.jpg", use_column_width=True, caption="High-End Supercar", output_format="auto")
 
-# --- Inputs in columns ---
+# ------------------------
+# Load model
+# ------------------------
+model_path = "simple_car_price_model.pkl"
+if os.path.exists(model_path):
+    try:
+        model = joblib.load(model_path)
+    except Exception as e:
+        st.error(f"❌ Failed to load model: {e}")
+        st.stop()
+else:
+    st.error(f"❌ Model file not found. Upload '{model_path}' to repo.")
+    st.stop()
+
+# ------------------------
+# Input fields in cards
+# ------------------------
+st.subheader("Enter Car Specs:")
+
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    brand = st.selectbox("Brand", ["Ferrari", "Lamborghini", "Porsche", "McLaren"])
-    year = st.slider("Year of Manufacture", 2000, 2026, 2018)
+    st.markdown('<div class="input-card">Year</div>', unsafe_allow_html=True)
+    year = st.number_input("", min_value=1980, max_value=2026, value=2022, key="year")
+
+    st.markdown('<div class="input-card">Mileage (km)</div>', unsafe_allow_html=True)
+    mileage = st.number_input("", min_value=0, value=5000, key="mileage")
+
+    st.markdown('<div class="input-card">Engine Size (L)</div>', unsafe_allow_html=True)
+    engine_size = st.number_input("", min_value=0.5, max_value=8.0, value=3.0, step=0.1, key="engine")
 
 with col2:
-    horsepower = st.number_input("Horsepower (HP)", min_value=100, max_value=1500, value=500)
-    mileage = st.number_input("Mileage (km)", min_value=0, max_value=500000, value=10000)
+    st.markdown('<div class="selectbox-card">Fuel Type</div>', unsafe_allow_html=True)
+    fuel_type = st.selectbox("", ["Petrol", "Diesel", "Electric", "Hybrid"], key="fuel")
+
+    st.markdown('<div class="selectbox-card">Transmission</div>', unsafe_allow_html=True)
+    transmission = st.selectbox("", ["Manual", "Automatic"], key="transmission")
+
+    st.markdown('<div class="input-card">Brand</div>', unsafe_allow_html=True)
+    brand = st.text_input("", value="Ferrari", key="brand")
 
 with col3:
-    fuel_type = st.selectbox("Fuel Type", ["Petrol", "Diesel", "Electric", "Hybrid"])
-    transmission = st.selectbox("Transmission", ["Manual", "Automatic", "Semi-Auto"])
+    st.markdown('<div class="input-card">Color</div>', unsafe_allow_html=True)
+    color = st.text_input("", value="Red", key="color")
 
-# --- Predict button ---
-if st.button("🚀 Predict Price"):
-    # Example preprocessing (update to your model's preprocessing)
-    df = pd.DataFrame({
-        "brand": [brand],
+    st.markdown('<div class="input-card">Number of Doors</div>', unsafe_allow_html=True)
+    doors = st.number_input("", min_value=2, max_value=5, value=2, key="doors")
+
+# ------------------------
+# Predict button
+# ------------------------
+if st.button("Predict Price"):
+    input_dict = {
         "year": [year],
-        "horsepower": [horsepower],
         "mileage": [mileage],
+        "engine_size": [engine_size],
         "fuel_type": [fuel_type],
-        "transmission": [transmission]
-    })
+        "transmission": [transmission],
+        "brand": [brand],
+        "color": [color],
+        "doors": [doors]
+    }
 
-    # If your model has a pipeline with preprocessing, just do:
-    prediction = model.predict(df)[0]
+    input_df = pd.DataFrame(input_dict)
+    input_encoded = pd.get_dummies(input_df, drop_first=True)
 
-    st.markdown(f"<h2>💰 Predicted Price: ${prediction:,.0f}</h2>", unsafe_allow_html=True)
+    # Align input with model features
+    model_features = model.feature_names_in_ if hasattr(model, 'feature_names_in_') else input_encoded.columns
+    input_encoded = input_encoded.reindex(columns=model_features, fill_value=0)
 
-# --- Extra sporty touches ---
-st.markdown("<hr style='border:2px solid #ff416c;'>", unsafe_allow_html=True)
-st.markdown("<h3>🔥 Top Sports Cars Insights 🔥</h3>", unsafe_allow_html=True)
-
-# Example visualization
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-# Dummy data for visualization
-cars = ["Ferrari", "Lamborghini", "Porsche", "McLaren"]
-prices = [250000, 300000, 200000, 350000]
-
-fig, ax = plt.subplots(figsize=(8,4))
-sns.barplot(x=cars, y=prices, palette="flare", ax=ax)
-ax.set_ylabel("Average Price ($)")
-ax.set_xlabel("Brand")
-st.pyplot(fig)
+    try:
+        price = model.predict(input_encoded)[0]
+        st.markdown(f'<div class="price-card">💰 ${price:,.2f}</div>', unsafe_allow_html=True)
+    except Exception as e:
+        st.error(f"❌ Prediction failed: {e}")
