@@ -6,59 +6,95 @@ import joblib
 import os
 
 # ------------------------
-# Streamlit page config
+# Page config
 # ------------------------
 st.set_page_config(
-    page_title="🏎️ Sports Car Price Predictor",
+    page_title="🏎️ Ultimate Sports Car Price Predictor",
     page_icon="🚗",
     layout="wide"
 )
 
 # ------------------------
-# Custom CSS for sporty theme
+# Custom CSS for visuals
 # ------------------------
 st.markdown("""
 <style>
-body {
-    background-color: #0f0f0f;
+/* Page background */
+body, .main {
+    background: linear-gradient(to right, #0b0b0b, #1c1c1c);
     color: #f0f0f0;
+    font-family: 'Segoe UI', sans-serif;
 }
+
+/* Title */
 h1 {
-    color: #ff4b4b;
+    color: #ff0000;
     text-align: center;
     font-size: 3rem;
+    font-weight: bold;
 }
-.stButton>button {
-    background-color: #ff4b4b;
-    color: white;
-    font-size: 18px;
-    border-radius: 12px;
-    padding: 12px 20px;
-    margin-top: 10px;
+
+/* Image banner */
+img {
+    border-radius: 15px;
+    margin-bottom: 20px;
 }
+
+/* Input boxes */
 .stTextInput>div>input, .stNumberInput>div>input, .stSelectbox>div>div {
-    border-radius: 8px;
-    padding: 8px;
+    border-radius: 12px;
+    padding: 10px;
     background-color: #1e1e1e;
     color: white;
+    border: 2px solid #ff0000;
 }
-.stAlert {
+
+/* Buttons */
+.stButton>button {
+    background: linear-gradient(90deg, #ff0000, #ff7f00);
+    color: white;
+    font-size: 18px;
+    border-radius: 15px;
+    padding: 12px 20px;
+    transition: transform 0.2s ease;
+}
+.stButton>button:hover {
+    transform: scale(1.05);
+}
+
+/* Success price card */
+.stSuccess {
+    background: linear-gradient(to right, #ff0000, #ffcc00);
+    color: #000;
+    font-size: 2rem;
+    font-weight: bold;
+    text-align: center;
+    padding: 15px;
+    border-radius: 15px;
+    box-shadow: 0 0 20px #ffcc00;
+}
+
+/* Error message */
+.stError {
+    background-color: #ff4b4b;
+    color: white;
     font-size: 1.2rem;
+    border-radius: 10px;
+    padding: 10px;
 }
 </style>
 """, unsafe_allow_html=True)
 
 # ------------------------
-# Title and image
+# Title and hero image
 # ------------------------
-st.markdown("<h1>🏎️ Sports Car Price Predictor</h1>", unsafe_allow_html=True)
+st.markdown("<h1>🏎️ Ultimate Sports Car Price Predictor</h1>", unsafe_allow_html=True)
 st.image("https://cdn.pixabay.com/photo/2017/09/14/10/43/ferrari-2748582_1280.jpg", use_column_width=True)
 
 # ------------------------
-# Load trained model
+# Load model
 # ------------------------
-model_path = "simple_car_price_model.pkl"  # Must be in the same folder
-
+model_path = "simple_car_price_model.pkl"
 if os.path.exists(model_path):
     try:
         model = joblib.load(model_path)
@@ -66,13 +102,13 @@ if os.path.exists(model_path):
         st.error(f"❌ Failed to load model: {e}")
         st.stop()
 else:
-    st.error(f"❌ Model file not found. Upload '{model_path}' to the repo.")
+    st.error(f"❌ Model file not found. Upload '{model_path}' to repo.")
     st.stop()
 
 # ------------------------
 # Input fields
 # ------------------------
-st.subheader("Enter Your Car Details:")
+st.subheader("Enter Car Details:")
 
 col1, col2, col3 = st.columns(3)
 
@@ -87,14 +123,13 @@ with col2:
     brand = st.text_input("Brand", value="Ferrari")
 
 with col3:
-    color = st.text_input("Color", value="Red")  # optional feature for dummy variable
+    color = st.text_input("Color", value="Red")
     doors = st.number_input("Number of Doors", min_value=2, max_value=5, value=2)
 
 # ------------------------
 # Predict button
 # ------------------------
 if st.button("Predict Price"):
-    # Create a dataframe matching the training features
     input_dict = {
         "year": [year],
         "mileage": [mileage],
@@ -108,19 +143,16 @@ if st.button("Predict Price"):
 
     input_df = pd.DataFrame(input_dict)
 
-    # One-hot encode categorical features (matching training)
-    # This assumes you trained model with pd.get_dummies(drop_first=True)
-    all_features = model.coef_.shape[0]  # number of features in model
+    # One-hot encode categorical features
     input_encoded = pd.get_dummies(input_df, drop_first=True)
 
-    # Align input columns to model columns (fill missing with 0)
+    # Align columns with model
     model_features = model.feature_names_in_ if hasattr(model, 'feature_names_in_') else input_encoded.columns
     input_encoded = input_encoded.reindex(columns=model_features, fill_value=0)
 
-    # Prediction
+    # Predict
     try:
         price = model.predict(input_encoded)[0]
         st.success(f"💰 Estimated Price: ${price:,.2f}")
     except Exception as e:
         st.error(f"❌ Prediction failed: {e}")
-
